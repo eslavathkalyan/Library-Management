@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LibraCore — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f1a;
+      --surface: #13162a;
+      --surface2: #1a1e35;
+      --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.08);
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --accent3: #43d9ad;
+      --accent4: #ffa94d;
+      --text: #e8eaf6;
+      --muted: #7c8098;
+      --card-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --font: 'DM Sans', sans-serif;
+      --font-display: 'Playfair Display', serif;
+    }
+
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; overflow-x: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width: 260px; min-height: 100vh; background: var(--surface); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; padding: 0 0 24px; }
+    .logo-wrap { padding: 28px 24px 20px; border-bottom: 1px solid var(--glass-border); }
+    .logo { font-family: var(--font-display); font-size: 1.6rem; color: var(--text); letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+    .logo-sub { font-size: 0.72rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+    .nav-section { padding: 20px 16px 8px; font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+    nav a { display: flex; align-items: center; gap: 12px; padding: 11px 20px; margin: 2px 8px; border-radius: var(--radius-sm); color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; position: relative; }
+    nav a:hover { background: var(--glass); color: var(--text); }
+    nav a.active { background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(108,99,255,0.05)); color: var(--accent); border: 1px solid rgba(108,99,255,0.2); }
+    nav a.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 60%; background: var(--accent); border-radius: 0 3px 3px 0; }
+    .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+    .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--glass-border); }
+    .admin-chip { display: flex; align-items: center; gap: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 50px; padding: 8px 14px; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .admin-info { flex: 1; min-width: 0; }
+    .admin-name { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .admin-role { font-size: 0.7rem; color: var(--muted); }
+
+    /* ── MAIN ── */
+    .main { margin-left: 260px; flex: 1; min-height: 100vh; padding: 0 36px 40px; }
+
+    /* ── TOP BAR ── */
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 24px 0 28px; border-bottom: 1px solid var(--glass-border); margin-bottom: 32px; gap: 16px; }
+    .page-title { font-family: var(--font-display); font-size: 1.7rem; line-height: 1.1; }
+    .page-title span { color: var(--muted); font-size: 0.85rem; font-family: var(--font); font-weight: 400; display: block; margin-top: 2px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .search-bar { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--glass-border); border-radius: 50px; padding: 9px 18px; width: 260px; transition: border-color 0.2s; }
+    .search-bar:focus-within { border-color: var(--accent); }
+    .search-bar input { background: none; border: none; outline: none; color: var(--text); font-family: var(--font); font-size: 0.87rem; width: 100%; }
+    .search-bar input::placeholder { color: var(--muted); }
+    .search-icon { color: var(--muted); font-size: 0.95rem; }
+    .notif-btn { width: 40px; height: 40px; background: var(--surface2); border: 1px solid var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; position: relative; transition: background 0.2s; }
+    .notif-btn:hover { background: var(--glass); }
+
+    /* ── STAT CARDS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 24px; position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow); }
+    .stat-card::after { content: ''; position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; border-radius: 50%; opacity: 0.12; }
+    .stat-card.c1::after { background: var(--accent); }
+    .stat-card.c2::after { background: var(--accent3); }
+    .stat-card.c3::after { background: var(--accent4); }
+    .stat-card.c4::after { background: var(--accent2); }
+    .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .stat-value { font-size: 2.2rem; font-weight: 700; line-height: 1; margin-bottom: 8px; }
+    .stat-card.c1 .stat-value { color: var(--accent); }
+    .stat-card.c2 .stat-value { color: var(--accent3); }
+    .stat-card.c3 .stat-value { color: var(--accent4); }
+    .stat-card.c4 .stat-value { color: var(--accent2); }
+    .stat-sub { font-size: 0.78rem; color: var(--muted); }
+    .stat-icon { position: absolute; bottom: 20px; right: 20px; font-size: 2rem; opacity: 0.18; }
+
+    /* ── CONTENT GRID ── */
+    .content-grid { display: grid; grid-template-columns: 1fr 300px; gap: 24px; margin-bottom: 24px; }
+
+    /* ── PANEL ── */
+    .panel { background: var(--surface); border: 1px solid var(--glass-border); border-radius: var(--radius); overflow: hidden; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--glass-border); }
+    .panel-title { font-weight: 600; font-size: 1rem; }
+    .panel-action { font-size: 0.78rem; color: var(--accent); text-decoration: none; font-weight: 500; border: 1px solid rgba(108,99,255,0.3); padding: 5px 12px; border-radius: 20px; transition: background 0.2s; }
+    .panel-action:hover { background: rgba(108,99,255,0.1); }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 12px 24px; text-align: left; border-bottom: 1px solid var(--glass-border); }
+    td { padding: 13px 24px; font-size: 0.87rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--glass); }
+    .book-cell { display: flex; align-items: center; gap: 10px; }
+    .book-color { width: 34px; height: 46px; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+    .badge-avail { background: rgba(67,217,173,0.15); color: var(--accent3); }
+    .badge-issued { background: rgba(255,169,77,0.15); color: var(--accent4); }
+    .badge-return { background: rgba(255,101,132,0.15); color: var(--accent2); }
+    .badge-reserved { background: rgba(108,99,255,0.15); color: var(--accent); }
+    .action-btns { display: flex; gap: 6px; }
+    .btn-icon { width: 30px; height: 30px; border: 1px solid var(--glass-border); background: var(--glass); border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; text-decoration: none; transition: background 0.2s; }
+    .btn-icon:hover { background: rgba(108,99,255,0.15); border-color: var(--accent); }
+
+    /* empty state */
+    .empty-state { padding: 40px 24px; text-align: center; color: var(--muted); font-size: 0.9rem; }
+
+    /* ── CATEGORIES SIDE ── */
+    .cat-list { padding: 12px 16px; }
+    .cat-item { display: flex; align-items: center; gap: 12px; padding: 10px 8px; border-radius: var(--radius-sm); text-decoration: none; color: var(--text); transition: background 0.2s; }
+    .cat-item:hover { background: var(--glass); }
+    .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .cat-name { flex: 1; font-size: 0.88rem; font-weight: 500; }
+    .cat-count { font-size: 0.78rem; color: var(--muted); }
+    .cat-bar-track { height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+    .cat-bar-fill { height: 100%; border-radius: 2px; }
+
+    /* ── BOTTOM GRID ── */
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .quick-actions { padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .qa-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 20px 12px; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.82rem; font-weight: 600; color: var(--text); border: 1px solid var(--glass-border); transition: all 0.2s; text-align: center; }
+    .qa-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+    .qa-btn .qa-icon { font-size: 1.5rem; }
+    .qa-btn.q1 { background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(108,99,255,0.05)); border-color: rgba(108,99,255,0.25); }
+    .qa-btn.q2 { background: linear-gradient(135deg, rgba(67,217,173,0.2), rgba(67,217,173,0.05)); border-color: rgba(67,217,173,0.25); }
+    .qa-btn.q3 { background: linear-gradient(135deg, rgba(255,169,77,0.2), rgba(255,169,77,0.05)); border-color: rgba(255,169,77,0.25); }
+    .qa-btn.q4 { background: linear-gradient(135deg, rgba(255,101,132,0.2), rgba(255,101,132,0.05)); border-color: rgba(255,101,132,0.25); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .content-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .sidebar { width: 70px; } .logo-wrap .logo-sub, .logo-wrap .logo { display: none; } .logo-wrap::after { content: '📚'; font-size: 1.6rem; display: block; text-align: center; } nav a span.nav-label { display: none; } .admin-info { display: none; } .main { margin-left: 70px; padding: 0 20px 40px; } .bottom-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr 1fr; } .topbar { flex-direction: column; align-items: flex-start; } .search-bar { width: 100%; } }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo">Libra<span>Core</span></div>
+    <div class="logo-sub">Library Management</div>
+  </div>
+
+  <div class="nav-section">Main</div>
+  <nav>
+    <a href="/" class="active"><span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span></a>
+    <a href="/books"><span class="nav-icon">📚</span><span class="nav-label">View Books</span></a>
+    <a href="/addBook"><span class="nav-icon">➕</span><span class="nav-label">Add Book</span></a>
+  </nav>
+
+  <div class="nav-section">Management</div>
+  <nav>
+    <a href="/management/issued"><span class="nav-icon">📋</span><span class="nav-label">Issued Books</span></a>
+    <a href="/management/overdue"><span class="nav-icon">⚠️</span><span class="nav-label">Overdue Books</span></a>
+    <a href="/management/categories"><span class="nav-icon">🏷️</span><span class="nav-label">Categories</span></a>
+  </nav>
+
+  <div class="nav-section">System</div>
+  <nav>
+    <a href="/addBook"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="admin-chip">
+      <div class="avatar">AD</div>
+      <div class="admin-info">
+        <div class="admin-name">Admin User</div>
+        <div class="admin-role">Super Admin</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN CONTENT ── -->
+<main class="main">
+  <div class="topbar">
+    <div class="page-title">
+      Dashboard
+      <span>Welcome back, Admin 👋</span>
+    </div>
+    <div class="topbar-right">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search books…" onkeydown="if(event.key==='Enter'){window.location='/books?search='+this.value}"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATS (real data from DB) ── -->
+  <div class="stats-grid">
+    <div class="stat-card c1">
+      <div class="stat-label">Total Books</div>
+      <div class="stat-value" th:text="${totalBooks}">0</div>
+      <div class="stat-sub">In the catalog</div>
+      <div class="stat-icon">📚</div>
+    </div>
+    <div class="stat-card c2">
+      <div class="stat-label">Available</div>
+      <div class="stat-value" th:text="${availableBooks}">0</div>
+      <div class="stat-sub">Ready to issue</div>
+      <div class="stat-icon">✅</div>
+    </div>
+    <div class="stat-card c3">
+      <div class="stat-label">Issued Books</div>
+      <div class="stat-value" th:text="${issuedBooks}">0</div>
+      <div class="stat-sub">Currently out</div>
+      <div class="stat-icon">📤</div>
+    </div>
+    <div class="stat-card c4">
+      <div class="stat-label">Overdue Returns</div>
+      <div class="stat-value" th:text="${overdueBooks}">0</div>
+      <div class="stat-sub">Needs attention</div>
+      <div class="stat-icon">⚠️</div>
+    </div>
+  </div>
+
+  <!-- ── CONTENT GRID ── -->
+  <div class="content-grid">
+
+    <!-- Recently Added Books (real data) -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📖 Recently Added Books</div>
+        <a href="/books" class="panel-action">View All →</a>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Book</th>
+              <th>Author</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Real rows from DB -->
+            <tr th:each="book : ${recentBooks}">
+              <td>
+                <div class="book-cell">
+                  <div class="book-color" style="background:linear-gradient(135deg,#6c63ff22,#6c63ff44)">📘</div>
+                  <span th:text="${book.title}">—</span>
+                </div>
+              </td>
+              <td th:text="${book.author}">—</td>
+              <td th:text="${book.category != null ? book.category : '—'}">—</td>
+              <td>
+                <span class="badge"
+                      th:classappend="${book.status == 'Available'} ? 'badge-avail' :
+                                      (${book.status == 'Issued'} ? 'badge-issued' :
+                                      (${book.status == 'Overdue'} ? 'badge-return' : 'badge-reserved'))"
+                      th:text="${book.status != null ? book.status : 'Available'}">Available</span>
+              </td>
+              <td>
+                <div class="action-btns">
+                  <a class="btn-icon" th:href="@{/books/edit/{id}(id=${book.id})}" title="Edit">✏️</a>
+                  <a class="btn-icon" th:href="@{/books/delete/{id}(id=${book.id})}"
+                     onclick="if(!confirm('Delete this book?')){event.preventDefault();}" title="Delete">🗑️</a>
+                </div>
+              </td>
+            </tr>
+            <!-- Empty state -->
+            <tr th:if="${#lists.isEmpty(recentBooks)}">
+              <td colspan="5">
+                <div class="empty-state">
+                  📭 No books in the catalog yet.
+                  <a href="/addBook" style="color:var(--accent);text-decoration:none;margin-left:6px">Add your first book →</a>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Categories (real data) -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🏷️ Categories</div>
+        <a href="/management/categories" class="panel-action">Manage</a>
+      </div>
+      <div class="cat-list">
+        <!-- Real category rows -->
+        <a class="cat-item" th:each="entry : ${categoryCounts}" href="/management/categories">
+          <div class="cat-dot" style="background:#6c63ff"></div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between">
+              <span class="cat-name" th:text="${entry.key}">Category</span>
+              <span class="cat-count" th:text="${entry.value}">0</span>
+            </div>
+            <div class="cat-bar-track">
+              <div class="cat-bar-fill"
+                   th:style="'width:' + (${totalBooks} > 0 ? ${entry.value * 100 / totalBooks} : 0) + '%;background:#6c63ff'">
+              </div>
+            </div>
+          </div>
+        </a>
+        <!-- Empty state -->
+        <div th:if="${#maps.isEmpty(categoryCounts)}" class="empty-state">
+          No categories yet. Add books to see data.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── BOTTOM GRID ── -->
+  <div class="bottom-grid">
+    <!-- Quick Actions -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⚡ Quick Actions</div>
+      </div>
+      <div class="quick-actions">
+        <a href="/addBook" class="qa-btn q1">
+          <span class="qa-icon">📘</span>
+          Add New Book
+        </a>
+        <a href="/books" class="qa-btn q2">
+          <span class="qa-icon">📚</span>
+          Browse Books
+        </a>
+        <a href="/management/issued" class="qa-btn q3">
+          <span class="qa-icon">📋</span>
+          Issued Books
+        </a>
+        <a href="/management/overdue" class="qa-btn q4">
+          <span class="qa-icon">⚠️</span>
+          Overdue Books
+        </a>
+      </div>
+    </div>
+
+    <!-- DB Summary -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📊 Library Summary</div>
+      </div>
+      <div style="padding:20px 24px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-border)">
+            <span style="font-size:0.88rem;color:var(--muted)">📚 Total Books</span>
+            <span style="font-weight:700;color:var(--accent)" th:text="${totalBooks}">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-border)">
+            <span style="font-size:0.88rem;color:var(--muted)">✅ Available</span>
+            <span style="font-weight:700;color:var(--accent3)" th:text="${availableBooks}">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-border)">
+            <span style="font-size:0.88rem;color:var(--muted)">📤 Issued</span>
+            <span style="font-weight:700;color:var(--accent4)" th:text="${issuedBooks}">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
+            <span style="font-size:0.88rem;color:var(--muted)">⚠️ Overdue</span>
+            <span style="font-weight:700;color:var(--accent2)" th:text="${overdueBooks}">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+</body>
+</html>

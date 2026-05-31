@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LibraCore — Books Catalog</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f1a; --surface: #13162a; --surface2: #1a1e35;
+      --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.08);
+      --accent: #6c63ff; --accent2: #ff6584; --accent3: #43d9ad; --accent4: #ffa94d;
+      --text: #e8eaf6; --muted: #7c8098;
+      --radius: 16px; --radius-sm: 10px;
+      --font: 'DM Sans', sans-serif; --font-display: 'Playfair Display', serif;
+    }
+
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+
+    .sidebar { width: 260px; min-height: 100vh; background: var(--surface); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; padding: 0 0 24px; }
+    .logo-wrap { padding: 28px 24px 20px; border-bottom: 1px solid var(--glass-border); }
+    .logo { font-family: var(--font-display); font-size: 1.6rem; color: var(--text); }
+    .logo span { color: var(--accent); }
+    .logo-sub { font-size: 0.72rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+    .nav-section { padding: 20px 16px 8px; font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+    nav a { display: flex; align-items: center; gap: 12px; padding: 11px 20px; margin: 2px 8px; border-radius: var(--radius-sm); color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; position: relative; }
+    nav a:hover { background: var(--glass); color: var(--text); }
+    nav a.active { background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(108,99,255,0.05)); color: var(--accent); border: 1px solid rgba(108,99,255,0.2); }
+    nav a.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 60%; background: var(--accent); border-radius: 0 3px 3px 0; }
+    .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+    .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--glass-border); }
+    .admin-chip { display: flex; align-items: center; gap: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 50px; padding: 8px 14px; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .admin-info { flex: 1; min-width: 0; }
+    .admin-name { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .admin-role { font-size: 0.7rem; color: var(--muted); }
+
+    .main { margin-left: 260px; flex: 1; padding: 0 36px 60px; }
+
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 24px 0 28px; border-bottom: 1px solid var(--glass-border); margin-bottom: 28px; gap: 16px; flex-wrap: wrap; }
+    .page-title { font-family: var(--font-display); font-size: 1.7rem; }
+    .page-title span { color: var(--muted); font-size: 0.85rem; font-family: var(--font); font-weight: 400; display: block; margin-top: 2px; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .mini-stats { display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; }
+    .mini-stat { background: var(--surface); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 14px 20px; display: flex; align-items: center; gap: 12px; flex: 1; min-width: 140px; }
+    .ms-icon { font-size: 1.4rem; }
+    .ms-val { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+    .ms-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; }
+
+    .filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .search-bar { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--glass-border); border-radius: 50px; padding: 10px 20px; flex: 1; min-width: 220px; max-width: 340px; transition: border-color 0.2s; }
+    .search-bar:focus-within { border-color: var(--accent); }
+    .search-bar input { background: none; border: none; outline: none; color: var(--text); font-family: var(--font); font-size: 0.88rem; width: 100%; }
+    .search-bar input::placeholder { color: var(--muted); }
+    .filter-select { background: var(--surface); border: 1px solid var(--glass-border); border-radius: 50px; padding: 10px 18px; color: var(--text); font-family: var(--font); font-size: 0.85rem; outline: none; cursor: pointer; transition: border-color 0.2s; }
+    .filter-select:focus { border-color: var(--accent); }
+    .filter-select option { background: var(--surface2); }
+
+    .btn-add { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 50px; background: linear-gradient(135deg, #6c63ff, #8b85ff); color: #fff; font-family: var(--font); font-size: 0.88rem; font-weight: 600; text-decoration: none; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(108,99,255,0.35); transition: all 0.2s; }
+    .btn-add:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.45); }
+
+    .panel { background: var(--surface); border: 1px solid var(--glass-border); border-radius: var(--radius); overflow: hidden; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--glass-border); flex-wrap: wrap; gap: 10px; }
+    .panel-title { font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+    .result-count { font-size: 0.78rem; color: var(--muted); background: var(--surface2); padding: 3px 10px; border-radius: 20px; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 12px 20px; text-align: left; border-bottom: 1px solid var(--glass-border); white-space: nowrap; }
+    td { padding: 14px 20px; font-size: 0.87rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .book-cell { display: flex; align-items: center; gap: 12px; }
+    .book-spine { width: 36px; height: 48px; border-radius: 5px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; background: rgba(108,99,255,0.15); }
+    .book-name { font-weight: 600; font-size: 0.9rem; }
+    .book-isbn { font-size: 0.72rem; color: var(--muted); font-family: monospace; margin-top: 2px; }
+
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+    .badge-avail { background: rgba(67,217,173,0.12); color: var(--accent3); }
+    .badge-avail::before { background: var(--accent3); }
+    .badge-issued { background: rgba(255,169,77,0.12); color: var(--accent4); }
+    .badge-issued::before { background: var(--accent4); }
+    .badge-return { background: rgba(255,101,132,0.12); color: var(--accent2); }
+    .badge-return::before { background: var(--accent2); }
+    .badge-reserved { background: rgba(108,99,255,0.12); color: var(--accent); }
+    .badge-reserved::before { background: var(--accent); }
+
+    .action-cell { display: flex; gap: 6px; }
+    .act-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 6px 12px; border-radius: 7px; border: 1px solid var(--glass-border); background: var(--glass); color: var(--muted); font-size: 0.75rem; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.18s; white-space: nowrap; font-family: var(--font); }
+    .act-btn:hover { color: var(--text); }
+    .act-btn.edit:hover { border-color: var(--accent3); color: var(--accent3); background: rgba(67,217,173,0.08); }
+    .act-btn.delete:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(255,101,132,0.08); }
+
+    .copies-cell { display: flex; flex-direction: column; gap: 4px; }
+    .copies-text { font-size: 0.85rem; font-weight: 600; }
+    .copies-bar { height: 4px; background: var(--surface2); border-radius: 2px; width: 80px; overflow: hidden; }
+    .copies-fill { height: 100%; border-radius: 2px; background: var(--accent3); }
+
+    .empty-state { padding: 64px 24px; text-align: center; }
+    .empty-icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.5; }
+    .empty-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+    .empty-text { font-size: 0.85rem; color: var(--muted); max-width: 300px; margin: 0 auto 20px; line-height: 1.6; }
+
+    @media (max-width: 900px) { .sidebar { width: 70px; } .logo-wrap .logo-sub, .logo-wrap .logo { display: none; } .logo-wrap::after { content: '📚'; font-size: 1.6rem; display: block; text-align: center; } nav a span.nav-label { display: none; } .admin-info { display: none; } .main { margin-left: 70px; padding: 0 16px 60px; } }
+    @media (max-width: 600px) { .mini-stats { gap: 10px; } .action-cell { flex-wrap: wrap; } .topbar { flex-direction: column; align-items: flex-start; } }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo">Libra<span>Core</span></div>
+    <div class="logo-sub">Library Management</div>
+  </div>
+
+  <div class="nav-section">Main</div>
+  <nav>
+    <a href="/"><span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span></a>
+    <a href="/books" class="active"><span class="nav-icon">📚</span><span class="nav-label">View Books</span></a>
+    <a href="/addBook"><span class="nav-icon">➕</span><span class="nav-label">Add Book</span></a>
+  </nav>
+
+  <div class="nav-section">Management</div>
+  <nav>
+    <a href="/management/issued"><span class="nav-icon">📋</span><span class="nav-label">Issued Books</span></a>
+    <a href="/management/overdue"><span class="nav-icon">⚠️</span><span class="nav-label">Overdue Books</span></a>
+    <a href="/management/categories"><span class="nav-icon">🏷️</span><span class="nav-label">Categories</span></a>
+  </nav>
+
+  <div class="nav-section">System</div>
+  <nav>
+    <a href="/addBook"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="admin-chip">
+      <div class="avatar">AD</div>
+      <div class="admin-info">
+        <div class="admin-name">Admin User</div>
+        <div class="admin-role">Super Admin</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+  <div class="topbar">
+    <div class="page-title">
+      Books Catalog
+      <span>Browse and manage all books in the library</span>
+    </div>
+    <div class="topbar-right">
+      <a href="/addBook" class="btn-add">＋ Add Book</a>
+    </div>
+  </div>
+
+  <!-- Mini Stats -->
+  <div class="mini-stats">
+    <div class="mini-stat">
+      <div class="ms-icon">📚</div>
+      <div>
+        <div class="ms-val" style="color:var(--accent)" th:text="${totalBooks}">0</div>
+        <div class="ms-label">Total Books</div>
+      </div>
+    </div>
+    <div class="mini-stat">
+      <div class="ms-icon">✅</div>
+      <div>
+        <div class="ms-val" style="color:var(--accent3)" th:text="${availableBooks}">0</div>
+        <div class="ms-label">Available</div>
+      </div>
+    </div>
+    <div class="mini-stat">
+      <div class="ms-icon">📤</div>
+      <div>
+        <div class="ms-val" style="color:var(--accent4)" th:text="${issuedBooks}">0</div>
+        <div class="ms-label">Issued</div>
+      </div>
+    </div>
+    <div class="mini-stat">
+      <div class="ms-icon">⚠️</div>
+      <div>
+        <div class="ms-val" style="color:var(--accent2)" th:text="${overdueBooks}">0</div>
+        <div class="ms-label">Overdue</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Panel -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        📖 All Books
+        <span class="result-count" th:text="'Showing ' + ${bookList.size()} + ' books'">Showing 0 books</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Book</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>ISBN</th>
+            <th>Copies</th>
+            <th>Status</th>
+            <th>Added</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="book, stat : ${bookList}">
+            <td th:text="${stat.count}" style="color:var(--muted);font-size:0.8rem">1</td>
+
+            <td>
+              <div class="book-cell">
+                <div class="book-spine">📘</div>
+                <div>
+                  <div class="book-name" th:text="${book.title}">—</div>
+                  <div class="book-isbn" th:text="${book.isbn}">—</div>
+                </div>
+              </div>
+            </td>
+
+            <td th:text="${book.author}">—</td>
+
+            <td>
+              <span th:text="${book.category != null ? book.category : '—'}"
+                    style="background:rgba(108,99,255,0.1);color:#a78bfa;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:600">—</span>
+            </td>
+
+            <td style="font-family:monospace;font-size:0.78rem;color:var(--muted)" th:text="${book.isbn}">—</td>
+
+            <td>
+              <div class="copies-cell">
+                <div class="copies-text">
+                  <span th:text="${book.availableCopies != null ? book.availableCopies : 0}">0</span>/<span th:text="${book.totalCopies != null ? book.totalCopies : 0}">0</span>
+                </div>
+                <div class="copies-bar">
+                  <div class="copies-fill"
+                       th:style="'width:' + ${(book.totalCopies != null and book.totalCopies > 0) ? (book.availableCopies != null ? book.availableCopies * 100 / book.totalCopies : 0) : 0} + '%'">
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <span class="badge"
+                    th:classappend="${book.status == 'Available'} ? 'badge-avail' :
+                                    (${book.status == 'Issued'} ? 'badge-issued' :
+                                    (${book.status == 'Overdue'} ? 'badge-return' : 'badge-reserved'))"
+                    th:text="${book.status != null ? book.status : 'Available'}">Available</span>
+            </td>
+
+            <td style="color:var(--muted);font-size:0.8rem"
+                th:text="${book.dateAdded != null ? book.dateAdded.toString() : '—'}">—</td>
+
+            <td>
+              <div class="action-cell">
+                <a class="act-btn edit" th:href="@{/books/edit/{id}(id=${book.id})}">✏ Edit</a>
+                <a class="act-btn delete" th:href="@{/books/delete/{id}(id=${book.id})}"
+                   onclick="if(!confirm('Delete this book?')){event.preventDefault();}">🗑 Delete</a>
+              </div>
+            </td>
+          </tr>
+
+          <tr th:if="${#lists.isEmpty(bookList)}">
+            <td colspan="9">
+              <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <div class="empty-title">No Books Found</div>
+                <div class="empty-text">The catalog is empty. Add your first book to get started.</div>
+                <a href="/addBook" class="btn-add" style="display:inline-flex;margin:0 auto">＋ Add First Book</a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+</body>
+</html>

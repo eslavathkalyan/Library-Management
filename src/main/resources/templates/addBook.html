@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LibraCore — Add Book</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f1a;
+      --surface: #13162a;
+      --surface2: #1a1e35;
+      --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.08);
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --accent3: #43d9ad;
+      --accent4: #ffa94d;
+      --text: #e8eaf6;
+      --muted: #7c8098;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --font: 'DM Sans', sans-serif;
+      --font-display: 'Playfair Display', serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── SIDEBAR (same as index) ── */
+    .sidebar {
+      width: 260px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 100;
+      padding: 0 0 24px;
+    }
+
+    .logo-wrap {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--text);
+    }
+    .logo span { color: var(--accent); }
+    .logo-sub { font-size: 0.72rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+    .nav-section { padding: 20px 16px 8px; font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+
+    nav a {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 20px; margin: 2px 8px;
+      border-radius: var(--radius-sm);
+      color: var(--muted); text-decoration: none;
+      font-size: 0.9rem; font-weight: 500;
+      transition: all 0.2s; position: relative;
+    }
+
+    nav a:hover { background: var(--glass); color: var(--text); }
+
+    nav a.active {
+      background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(108,99,255,0.05));
+      color: var(--accent);
+      border: 1px solid rgba(108,99,255,0.2);
+    }
+
+    nav a.active::before {
+      content: ''; position: absolute;
+      left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 60%;
+      background: var(--accent); border-radius: 0 3px 3px 0;
+    }
+
+    .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+
+    .sidebar-footer {
+      margin-top: auto; padding: 16px 20px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .admin-chip {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      border-radius: 50px; padding: 8px 14px;
+    }
+
+    .avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+
+    .admin-info { flex: 1; min-width: 0; }
+    .admin-name { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .admin-role { font-size: 0.7rem; color: var(--muted); }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: 260px;
+      flex: 1;
+      padding: 0 36px 60px;
+    }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 0 28px;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: 36px; gap: 16px;
+    }
+
+    .page-title { font-family: var(--font-display); font-size: 1.7rem; line-height: 1.1; }
+    .page-title span { color: var(--muted); font-size: 0.85rem; font-family: var(--font); font-weight: 400; display: block; margin-top: 2px; }
+
+    .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--muted); }
+    .breadcrumb a { color: var(--accent); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb .sep { opacity: 0.4; }
+
+    /* ── FORM LAYOUT ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 28px;
+      align-items: start;
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 28px; border-bottom: 1px solid var(--glass-border);
+    }
+
+    .panel-title { font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+
+    .panel-body { padding: 28px; }
+
+    /* ── FORM ELEMENTS ── */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .required-star { color: var(--accent2); margin-left: 2px; }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      background: var(--surface2);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.9rem;
+      width: 100%;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.12);
+    }
+
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+
+    select option { background: var(--surface2); color: var(--text); }
+
+    textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+
+    .hint { font-size: 0.74rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── COVER UPLOAD ── */
+    .cover-upload {
+      border: 2px dashed var(--glass-border);
+      border-radius: var(--radius);
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .cover-upload:hover {
+      border-color: var(--accent);
+      background: rgba(108,99,255,0.04);
+    }
+
+    .cover-upload input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+
+    .upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .upload-label { font-size: 0.88rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .upload-hint { font-size: 0.76rem; color: var(--muted); }
+
+    /* ── STATUS RADIO ── */
+    .radio-group { display: flex; flex-direction: column; gap: 8px; }
+
+    .radio-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .radio-item:hover { background: var(--glass); border-color: var(--accent); }
+
+    .radio-item input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+    .radio-label { font-size: 0.87rem; font-weight: 500; }
+
+    .radio-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      margin-left: auto;
+    }
+
+    /* ── SUBMIT BUTTONS ── */
+    .btn-group { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 28px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6c63ff, #8b85ff);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(108,99,255,0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(108,99,255,0.45);
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--muted);
+      border: 1px solid var(--glass-border);
+    }
+
+    .btn-secondary:hover { color: var(--text); border-color: var(--muted); }
+
+    .btn-danger {
+      background: rgba(255,101,132,0.12);
+      color: var(--accent2);
+      border: 1px solid rgba(255,101,132,0.25);
+    }
+
+    .btn-danger:hover { background: rgba(255,101,132,0.2); }
+
+    /* ── TIPS CARD ── */
+    .tips-card {
+      background: linear-gradient(135deg, rgba(108,99,255,0.1), rgba(67,217,173,0.05));
+      border: 1px solid rgba(108,99,255,0.2);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .tips-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+
+    .tip-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; line-height: 1.5;
+    }
+
+    .tip-item:last-child { margin-bottom: 0; }
+
+    /* ── RECENT ENTRIES ── */
+    .recent-entry {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .recent-entry:last-child { border-bottom: none; }
+
+    .re-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+
+    .re-body { flex: 1; min-width: 0; }
+    .re-title { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .re-sub { font-size: 0.74rem; color: var(--muted); }
+    .re-time { font-size: 0.7rem; color: var(--muted); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { width: 70px; }
+      .logo-wrap .logo-sub, .logo-wrap .logo { display: none; }
+      .logo-wrap::after { content: '📚'; font-size: 1.6rem; display: block; text-align: center; }
+      nav a span.nav-label { display: none; }
+      .admin-info { display: none; }
+      .main { margin-left: 70px; padding: 0 20px 60px; }
+    }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .btn-group { flex-direction: column; }
+      .btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo">Libra<span>Core</span></div>
+    <div class="logo-sub">Library Management</div>
+  </div>
+
+  <div class="nav-section">Main</div>
+  <nav>
+    <a href="/"><span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span></a>
+    <a href="/books"><span class="nav-icon">📚</span><span class="nav-label">View Books</span></a>
+    <a href="/addBook" class="active"><span class="nav-icon">➕</span><span class="nav-label">Add Book</span></a>
+    <a href="#"><span class="nav-icon">🔍</span><span class="nav-label">Search Book</span></a>
+  </nav>
+
+  <div class="nav-section">Management</div>
+  <nav>
+    <a href="#"><span class="nav-icon">🎓</span><span class="nav-label">Students</span></a>
+    <a href="#"><span class="nav-icon">🔄</span><span class="nav-label">Return Books</span></a>
+    <a href="#"><span class="nav-icon">📋</span><span class="nav-label">Issued Books</span></a>
+    <a href="#"><span class="nav-icon">🏷️</span><span class="nav-label">Categories</span></a>
+  </nav>
+
+  <div class="nav-section">System</div>
+  <nav>
+    <a href="#"><span class="nav-icon">🛡️</span><span class="nav-label">Admin Panel</span></a>
+    <a href="#"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="admin-chip">
+      <div class="avatar">AD</div>
+      <div class="admin-info">
+        <div class="admin-name">Admin User</div>
+        <div class="admin-role">Super Admin</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="breadcrumb" style="margin-bottom:8px">
+        <a href="/">Dashboard</a>
+        <span class="sep">›</span>
+        <a href="/books">Books</a>
+        <span class="sep">›</span>
+        <span>Add New Book</span>
+      </div>
+      <div class="page-title">
+        Add New Book
+        <span>Fill in the details to add a book to the catalog</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-grid">
+    <!-- ── MAIN FORM ── -->
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📘 Book Information</div>
+        </div>
+        <div class="panel-body">
+          <form th:action="@{/books/add}" th:object="${book}" method="post">
+
+            <div class="form-row">
+              <div class="field">
+                <label>Book Title <span class="required-star">*</span></label>
+                <input type="text" th:field="*{title}" placeholder="e.g. Clean Code" required/>
+              </div>
+              <div class="field">
+                <label>Author Name <span class="required-star">*</span></label>
+                <input type="text" th:field="*{author}" placeholder="e.g. Robert C. Martin" required/>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label>ISBN / Book ID <span class="required-star">*</span></label>
+                <input type="text" th:field="*{isbn}" placeholder="e.g. 978-0132350884" required/>
+                <span class="hint">Unique identifier for the book</span>
+              </div>
+              <div class="field">
+                <label>Publisher</label>
+                <input type="text" th:field="*{publisher}" placeholder="e.g. Prentice Hall"/>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label>Category <span class="required-star">*</span></label>
+                <select th:field="*{category}" required>
+                  <option value="">— Select Category —</option>
+                  <option value="technology">Technology</option>
+                  <option value="science">Science</option>
+                  <option value="fiction">Fiction</option>
+                  <option value="philosophy">Philosophy</option>
+                  <option value="self-help">Self-Help</option>
+                  <option value="history">History</option>
+                  <option value="arts">Arts &amp; Culture</option>
+                  <option value="biography">Biography</option>
+                  <option value="mathematics">Mathematics</option>
+                  <option value="medicine">Medicine</option>
+                  <option value="law">Law</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Language</label>
+                <select th:field="*{language}">
+                  <option value="english">English</option>
+                  <option value="hindi">Hindi</option>
+                  <option value="punjabi">Punjabi</option>
+                  <option value="french">French</option>
+                  <option value="german">German</option>
+                  <option value="spanish">Spanish</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label>Publication Year</label>
+                <input type="number" th:field="*{year}" placeholder="e.g. 2023" min="1800" max="2099"/>
+              </div>
+              <div class="field">
+                <label>Edition</label>
+                <input type="text" th:field="*{edition}" placeholder="e.g. 3rd Edition"/>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label>Total Copies <span class="required-star">*</span></label>
+                <input type="number" th:field="*{totalCopies}" placeholder="e.g. 5" min="1" required/>
+              </div>
+              <div class="field">
+                <label>Shelf / Rack Location</label>
+                <input type="text" th:field="*{shelfLocation}" placeholder="e.g. A-12"/>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label>Date Added</label>
+                <input type="date" th:field="*{dateAdded}"/>
+              </div>
+              <div class="field">
+                <label>Price (₹)</label>
+                <input type="number" th:field="*{price}" placeholder="e.g. 499" min="0"/>
+              </div>
+            </div>
+
+            <div class="field full">
+              <label>Description / Summary</label>
+              <textarea th:field="*{description}" placeholder="Write a brief synopsis or notes about this book…"></textarea>
+            </div>
+
+            <div class="btn-group">
+              <button type="submit" class="btn btn-primary">
+                ✅ Save Book
+              </button>
+              <button type="reset" class="btn btn-secondary">
+                ↩ Reset Form
+              </button>
+              <a href="/books" class="btn btn-danger">
+                ✕ Cancel
+              </a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SIDE COLUMN ── -->
+    <div>
+      <!-- Cover Upload -->
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-header">
+          <div class="panel-title">🖼️ Book Cover</div>
+        </div>
+        <div class="panel-body">
+          <div class="cover-upload">
+            <input type="file" accept="image/*"/>
+            <div class="upload-icon">📁</div>
+            <div class="upload-label">Click to Upload Cover</div>
+            <div class="upload-hint">PNG, JPG, WEBP — max 5MB</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-header">
+          <div class="panel-title">📌 Book Status</div>
+        </div>
+        <div class="panel-body">
+          <div class="radio-group">
+            <label class="radio-item">
+              <input type="radio" name="status" value="available" checked/>
+              <span class="radio-label">Available</span>
+              <span class="radio-dot" style="background:#43d9ad"></span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="status" value="issued"/>
+              <span class="radio-label">Issued Out</span>
+              <span class="radio-dot" style="background:#ffa94d"></span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="status" value="reserved"/>
+              <span class="radio-label">Reserved</span>
+              <span class="radio-dot" style="background:#6c63ff"></span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="status" value="lost"/>
+              <span class="radio-label">Lost / Damaged</span>
+              <span class="radio-dot" style="background:#ff6584"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tips -->
+      <div class="tips-card">
+        <div class="tips-title">💡 Quick Tips</div>
+        <div class="tip-item">✔ Enter the ISBN for quick barcode scanning support.</div>
+        <div class="tip-item">✔ The shelf location helps staff locate books faster.</div>
+        <div class="tip-item">✔ Multiple copies increase a book's availability score.</div>
+        <div class="tip-item">✔ Choose the closest category for better filtering.</div>
+      </div>
+
+      <!-- Recently Added -->
+      <div class="panel" style="margin-top:20px">
+        <div class="panel-header">
+          <div class="panel-title">🕐 Recently Added</div>
+        </div>
+        <div class="panel-body" style="padding:16px 20px">
+          <div class="recent-entry">
+            <div class="re-icon" style="background:rgba(108,99,255,0.15)">📘</div>
+            <div class="re-body">
+              <div class="re-title">Clean Code</div>
+              <div class="re-sub">Robert C. Martin</div>
+            </div>
+            <div class="re-time">Today</div>
+          </div>
+          <div class="recent-entry">
+            <div class="re-icon" style="background:rgba(67,217,173,0.15)">📗</div>
+            <div class="re-body">
+              <div class="re-title">Atomic Habits</div>
+              <div class="re-sub">James Clear</div>
+            </div>
+            <div class="re-time">Yesterday</div>
+          </div>
+          <div class="recent-entry">
+            <div class="re-icon" style="background:rgba(255,169,77,0.15)">📙</div>
+            <div class="re-body">
+              <div class="re-title">Deep Work</div>
+              <div class="re-sub">Cal Newport</div>
+            </div>
+            <div class="re-time">2 days ago</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
